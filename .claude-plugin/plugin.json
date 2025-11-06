@@ -1,0 +1,27 @@
+{
+  "name": "anytask-claude",
+  "version": "1.0.0",
+  "description": "AI-native task management for Claude Code. Create and work on tasks with intelligent workflows.",
+  "author": {
+    "name": "AnyTransformer Inc.",
+    "email": "contact@anytransformer.com"
+  },
+  "homepage": "https://github.com/anyt-ai/anyt-claude",
+  "repository": "https://github.com/anyt-ai/anyt-claude",
+  "license": "MIT",
+
+  "commands": {
+    "anyt-create": ".claude-plugin/commands/anyt-create.md",
+    "anyt-next": ".claude-plugin/commands/anyt-next.md"
+  },
+
+  "skills": {
+    "anytask-creator": ".claude-plugin/skills/task-creator.md",
+    "anytask-workflow": ".claude-plugin/skills/task-workflow.md",
+    "anytask-context": ".claude-plugin/skills/task-context.md"
+  },
+
+  "requirements": {
+    "cli": "anyt >= 0.1.0"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "anytask-plugins",
+  "name": "AnyTask Claude Plugins",
+  "description": "AI-native task management plugins for Claude Code",
+  "maintainer": {
+    "name": "AnyTransformer Inc.",
+    "email": "contact@anytransformer.com"
+  },
+  "plugins": [
+    {
+      "name": "anytask-claude",
+      "description": "Core AnyTask integration with intelligent task creation and suggestions",
+      "source": "https://github.com/anyt-ai/anyt-claude"
+    }
+  ]
+}

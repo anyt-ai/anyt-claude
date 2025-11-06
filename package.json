@@ -1,0 +1,33 @@
+{
+  "name": "anytask-claude-plugin",
+  "version": "1.0.0",
+  "description": "AI-native task management for Claude Code. Create and work on tasks with intelligent workflows.",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "plugin",
+    "task-management",
+    "anytask",
+    "ai",
+    "productivity"
+  ],
+  "homepage": "https://github.com/anyt-ai/anyt-claude",
+  "bugs": {
+    "url": "https://github.com/anyt-ai/anyt-claude/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anyt-ai/anyt-claude.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "AnyTransformer Inc.",
+    "email": "contact@anytransformer.com"
+  },
+  "files": [
+    ".claude-plugin/**/*"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
