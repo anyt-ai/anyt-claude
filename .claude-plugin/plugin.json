@@ -1,5 +1,5 @@
 {
-  "name": "anytask-claude",
+  "name": "anytask",
   "version": "1.0.0",
   "description": "AI-native task management for Claude Code. Create and work on tasks with intelligent workflows.",
   "author": {
@@ -11,8 +11,7 @@
   "license": "MIT",
   "keywords": ["task-management", "anytask", "productivity", "ai"],
   "commands": [
-    "./commands/anyt-create.md",
-    "./commands/anyt-next.md"
-  ],
-  "agents": "./skills/"
+    "./.claude-plugin/commands/create.md",
+    "./.claude-plugin/commands/next.md"
+  ]
 }

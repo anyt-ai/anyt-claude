@@ -1,6 +1,6 @@
 {
-  "id": "anytask-plugins",
-  "name": "anytask-claude-plugins",
+  "id": "anytask",
+  "name": "anytask",
   "description": "AI-native task management plugins for Claude Code",
   "owner": {
     "name": "AnyTransformer Inc.",
@@ -8,7 +8,7 @@
   },
   "plugins": [
     {
-      "name": "anytask-claude",
+      "name": "anytask",
       "description": "Core AnyTask integration with intelligent task creation and suggestions",
       "source": "./"
     }
