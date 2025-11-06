@@ -11,14 +11,14 @@
   "license": "MIT",
 
   "commands": {
-    "anyt-create": ".claude-plugin/commands/anyt-create.md",
-    "anyt-next": ".claude-plugin/commands/anyt-next.md"
+    "anyt-create": "commands/anyt-create.md",
+    "anyt-next": "commands/anyt-next.md"
   },
 
   "skills": {
-    "anytask-creator": ".claude-plugin/skills/task-creator.md",
-    "anytask-workflow": ".claude-plugin/skills/task-workflow.md",
-    "anytask-context": ".claude-plugin/skills/task-context.md"
+    "anytask-creator": "skills/task-creator.md",
+    "anytask-workflow": "skills/task-workflow.md",
+    "anytask-context": "skills/task-context.md"
   },
 
   "requirements": {
