@@ -9,19 +9,10 @@
   "homepage": "https://github.com/anyt-ai/anyt-claude",
   "repository": "https://github.com/anyt-ai/anyt-claude",
   "license": "MIT",
-
-  "commands": {
-    "anyt-create": "commands/anyt-create.md",
-    "anyt-next": "commands/anyt-next.md"
-  },
-
-  "skills": {
-    "anytask-creator": "skills/task-creator.md",
-    "anytask-workflow": "skills/task-workflow.md",
-    "anytask-context": "skills/task-context.md"
-  },
-
-  "requirements": {
-    "cli": "anyt >= 0.1.0"
-  }
+  "keywords": ["task-management", "anytask", "productivity", "ai"],
+  "commands": [
+    "./commands/anyt-create.md",
+    "./commands/anyt-next.md"
+  ],
+  "agents": "./skills/"
 }
