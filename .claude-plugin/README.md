@@ -175,19 +175,24 @@ This task depends on DEV-40 which is already complete. Would you like to pick th
    pipx install anyt
    ```
 
-2. **Configure AnyTask**: Set up your environment and authenticate.
+2. **Configure AnyTask**: Set up your API key and initialize your workspace.
 
    ```bash
-   # Add environment (if using local dev server)
-   anyt env add dev http://localhost:8000
-   anyt env use dev
+   # Set your API key (get from https://anyt.dev)
+   export ANYT_API_KEY=anyt_agent_...
 
-   # Authenticate
-   anyt auth login
+   # Initialize AnyTask in your project directory
+   cd /path/to/your/project
+   anyt init
 
-   # Select workspace
-   anyt workspace list
-   anyt workspace select DEV
+   # Or initialize with specific workspace
+   anyt init --workspace-id 123 --identifier DEV
+   ```
+
+   For development/local server:
+   ```bash
+   # Use development API
+   anyt init --dev
    ```
 
 ### Install Plugin
@@ -270,15 +275,28 @@ Claude: [Ready to create another task]
 
 ## Configuration
 
-The plugin uses your existing AnyTask CLI configuration from `~/.config/anyt/config.json` and `.anyt/anyt.json`. No additional configuration is needed.
+The plugin uses your workspace-based AnyTask CLI configuration. Configuration is stored in `.anyt/anyt.json` within your project workspace. No global configuration file is required.
+
+### Workspace Configuration
+
+After initializing AnyTask in your workspace with `anyt init`, the plugin will use the workspace configuration from `.anyt/anyt.json`:
+
+```json
+{
+  "workspace_id": 1,
+  "workspace_name": "My Workspace",
+  "identifier": "DEV",
+  "current_project_id": 1
+}
+```
 
 ### Environment Variables
 
 The plugin respects the same environment variables as the AnyTask CLI:
+- `ANYT_API_KEY` - API key for authentication (required)
 - `ANYT_ENV` - Current environment (dev/staging/prod)
-- `ANYT_AUTH_TOKEN` - Authentication token
-- `ANYT_AGENT_KEY` - Agent API key
-- `ANYT_CONFIG_DIR` - Override config directory
+- `ANYT_AUTH_TOKEN` - Authentication token (if using user auth)
+- `ANYT_AGENT_KEY` - Agent API key (alternative to ANYT_API_KEY)
 
 ## Troubleshooting
 
@@ -306,8 +324,14 @@ anyt task add "My first task" --status todo
 
 Verify your workspace configuration:
 ```bash
-anyt workspace list
+# Check if workspace is initialized
 cat .anyt/anyt.json
+
+# Verify API connection
+anyt health check
+
+# Check API key is set
+echo $ANYT_API_KEY
 ```
 
 ## Development

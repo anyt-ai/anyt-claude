@@ -31,19 +31,24 @@ The AnyTask Claude Code Plugin seamlessly integrates AnyTask's powerful task man
    pipx install anyt
    ```
 
-2. **Configure AnyTask**: Set up your environment and authenticate.
+2. **Configure AnyTask**: Set up your API key and initialize your workspace.
 
    ```bash
-   # Add environment (if using local dev server)
-   anyt env add dev http://localhost:8000
-   anyt env use dev
+   # Set your API key (get from https://anyt.dev)
+   export ANYT_API_KEY=anyt_agent_...
 
-   # Authenticate
-   anyt auth login
+   # Initialize AnyTask in your project directory
+   cd /path/to/your/project
+   anyt init
 
-   # Select workspace
-   anyt workspace list
-   anyt workspace select DEV
+   # Or initialize with specific workspace
+   anyt init --workspace-id 123 --identifier DEV
+   ```
+
+   For development/local server:
+   ```bash
+   # Use development API
+   anyt init --dev
    ```
 
 ### Installation
