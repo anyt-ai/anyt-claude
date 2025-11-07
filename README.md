@@ -48,21 +48,7 @@ The AnyTask Claude Code Plugin seamlessly integrates AnyTask's powerful task man
 
 ### Installation
 
-#### Option 1: Install from GitHub (Recommended)
-
-```bash
-# In Claude Code terminal
-/plugin install https://github.com/anyt-ai/anyt-claude
-```
-
-#### Option 2: Install from Local Directory (Development)
-
-```bash
-# In Claude Code terminal, from this repository
-/plugin install .
-```
-
-#### Option 3: Add to Marketplace
+Install the plugin from the Claude Code marketplace:
 
 1. Add the marketplace to Claude Code:
 
@@ -73,28 +59,30 @@ The AnyTask Claude Code Plugin seamlessly integrates AnyTask's powerful task man
 2. Install the plugin:
 
 ```bash
-/plugin install anytask-claude@anytask-plugins
+/plugin install anytask@anytask
 ```
+
+That's it! The plugin is now ready to use.
 
 ## Usage
 
 ### Slash Commands
 
-#### `/anyt-create` - Create New Task
+#### `/anytask:create` - Create New Task
 
 Create a new task in AnyTask with full control over all task properties.
 
 ```
-User: /anyt-create
+User: /anytask:create
 Claude: I'll help you create a new task. What would you like the task title to be?
 ```
 
-#### `/anyt-next` - Get Next Task Recommendation
+#### `/anytask:next` - Get Next Task Recommendation
 
 Get intelligent AI-powered suggestions for your next task and start working on it.
 
 ```
-User: /anyt-next
+User: /anytask:next
 Claude: Let me get task suggestions for you...
 
 Top Task Recommendations:
@@ -119,8 +107,8 @@ Skills work in the background and activate automatically when relevant:
 ├── plugin.json              # Plugin manifest
 ├── marketplace.json         # Marketplace configuration
 ├── commands/                # Slash commands (user-invoked)
-│   ├── anyt-create.md      # Create task command
-│   └── anyt-next.md        # Next task command
+│   ├── create.md           # Create task command
+│   └── next.md             # Next task command
 ├── skills/                  # Skills (model-invoked)
 │   ├── task-creator.md     # Automatic task creation
 │   ├── task-workflow.md    # Workflow management
@@ -129,6 +117,8 @@ Skills work in the background and activate automatically when relevant:
 ```
 
 ### Testing the Plugin Locally
+
+For development and testing:
 
 1. Clone the repository:
    ```bash
@@ -143,13 +133,13 @@ Skills work in the background and activate automatically when relevant:
 
 3. Test the commands:
    ```
-   /anyt-create
-   /anyt-next
+   /anytask:create
+   /anytask:next
    ```
 
 4. After making changes, reinstall:
    ```
-   /plugin uninstall anytask-claude
+   /plugin uninstall anytask
    /plugin install .
    ```
 
