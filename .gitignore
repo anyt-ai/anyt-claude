@@ -56,3 +56,6 @@ temp/
 
 # OS specific
 Thumbs.db
+
+.claude
+.anyt
