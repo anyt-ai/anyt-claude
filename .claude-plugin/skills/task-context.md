@@ -216,7 +216,7 @@ anyt active
 ```
 I couldn't find task DEV-99. Would you like to:
 - See available tasks: anyt task list
-- Create a new task: /anyt-create
+- Create a new task: /anytask:create
 ```
 
 **Ambiguous reference:**

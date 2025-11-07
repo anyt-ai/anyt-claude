@@ -94,7 +94,7 @@ If there's an active task, ask: "You're currently working on [TASK]. Would you l
 - Parse the output carefully to extract task details
 - Make recommendations based on priority, dependencies, and readiness
 - After picking a task, offer to help implement it immediately
-- If no suggestions are available, explain why and suggest creating a new task with `/anyt-create`
+- If no suggestions are available, explain why and suggest creating a new task with `/anytask:create`
 
 ## Example Workflow
 
