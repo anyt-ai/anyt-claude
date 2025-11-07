@@ -2,67 +2,112 @@
 
 You are helping the user create a new task in AnyTask using the CLI.
 
+**Expected input:** A description or prompt for what needs to be built (e.g., "Add API endpoint for task comments")
+
 ## Your Process
 
-1. **Gather Task Information**
-   Ask the user for the following details (use sensible defaults if not provided):
-   - **Title** (required): What is the task about?
-   - **Description** (optional): Any additional details?
-   - **Priority** (optional): Priority level from -2 (lowest) to 2 (highest), default is 0
-   - **Status** (optional): backlog, todo, in_progress, or done (default: backlog)
-   - **Phase** (optional): Phase/milestone identifier (e.g., T3, Phase 1)
-   - **Labels** (optional): Comma-separated labels
-   - **Owner** (optional): User or agent ID to assign the task to
-   - **Estimate** (optional): Time estimate in hours
-
-2. **Create the Task**
-   Use the Bash tool to create the task with the provided information:
+1. **Create the Task with Title Only**
+   Use the Bash tool to create the task with just the title to get the task ID:
    ```bash
-   anyt task add "<title>" \
-     --description "<description>" \
-     --priority <priority> \
-     --status <status> \
-     --phase "<phase>" \
-     --labels "<labels>" \
-     --owner "<owner>" \
-     --estimate <hours>
+   anyt task add "<title>"
    ```
 
-   Only include flags for information that was provided by the user.
+   Parse the output to extract the task identifier (e.g., DEV-42).
 
-3. **Display Results**
-   - Parse the command output to show the created task details
-   - Display the task identifier (e.g., DEV-42)
-   - Show key fields: title, status, priority, and description
+2. **Analyze the Description**
+   Based on the user's input, break down:
+   - What needs to be implemented
+   - Specific technical requirements and objectives
+   - Dependencies on other tasks (if any)
+   - Acceptance criteria for completion
+   - Complexity estimate (hours)
+   - Implementation guidance and technical notes
 
-4. **Offer Next Actions**
-   Ask the user:
-   - "Would you like to start working on this task now? I can pick it for you."
-   - "Would you like to add dependencies to this task?"
-   - "Would you like to create another task?"
+3. **Update Task with Structured Description**
+   Use the Bash tool to update the task description with the following structured format:
+   ```bash
+   anyt task edit <task-id> --description "$(cat <<'EOF'
+   ## Description
+   [What needs to be built]
 
-## Example Usage
+   ## Objectives
+   - [Specific goal 1]
+   - [Specific goal 2]
 
-**Basic task creation:**
-```bash
-anyt task add "Implement OAuth authentication"
-```
+   ## Acceptance Criteria
+   - [ ] [Criterion 1]
+   - [ ] [Criterion 2]
+   - [ ] Tests written and passing
+   - [ ] Code reviewed and merged
 
-**Task with full details:**
-```bash
-anyt task add "Implement OAuth authentication" \
-  --description "Add OAuth 2.0 support for Google and GitHub" \
-  --priority 2 \
-  --status todo \
-  --labels "feature,auth" \
-  --estimate 8
-```
+   ## Dependencies
+   - [Task identifier]: [Task name]
+   (Or "None" if no dependencies)
+
+   ## Estimated Effort
+   [X hours estimate]
+
+   ## Technical Notes
+   [Implementation guidance]
+   EOF
+   )"
+   ```
+
+4. **Ask User**
+   Show the created task summary and ask:
+   - "Would you like to start working on this task now? (use `anyt task pick <task-id>`)"
+   - "Or would you like to keep it in backlog for later?"
 
 ## Important Notes
 
+- Only create tasks for actual code implementation work
+- Don't create tasks for linting, formatting, or docs
 - Always use the Bash tool to run `anyt` commands
-- The title argument is required and should be quoted if it contains spaces
-- Priority ranges from -2 (lowest) to 2 (highest)
-- Status options: backlog, todo, in_progress, done
+- The title should be clear and concise
 - Parse the output to extract the task identifier (e.g., DEV-42)
-- Offer to pick the task for the user after creation
+- Be specific in acceptance criteria
+- Include proper dependencies (check existing tasks if needed)
+- Use HEREDOC format for multi-line descriptions to ensure proper formatting
+
+## Example
+
+**User request:** "Add API endpoint for task comments"
+
+**Step 1: Create task**
+```bash
+anyt task add "Add API endpoint for task comments"
+```
+
+**Step 2: Update with structured description**
+```bash
+anyt task edit DEV-42 --description "$(cat <<'EOF'
+## Description
+Create REST API endpoint to add comments to tasks
+
+## Objectives
+- Implement POST /api/tasks/{task_id}/comments endpoint
+- Store comments in database with timestamps
+- Return created comment with proper status codes
+
+## Acceptance Criteria
+- [ ] Endpoint accepts task_id and comment text
+- [ ] Comments are persisted to database
+- [ ] Proper error handling for invalid task_id
+- [ ] Tests written and passing
+- [ ] Code reviewed and merged
+
+## Dependencies
+None
+
+## Estimated Effort
+4 hours
+
+## Technical Notes
+- Use existing task validation middleware
+- Follow RESTful conventions
+- Include user_id from auth context
+EOF
+)"
+```
+
+Create the task now.
