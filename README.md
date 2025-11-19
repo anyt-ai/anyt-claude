@@ -8,14 +8,15 @@ The AnyTask Claude Code Plugin seamlessly integrates AnyTask's powerful task man
 
 ## Features
 
-- **Slash Commands**: Explicit commands for creating tasks and getting recommendations
-- **Automatic Skills**: Background skills that activate based on conversation context
-- **Intelligent Task Creation**: Create tasks with full metadata through conversational interface
-- **AI-Powered Suggestions**: Get smart recommendations for your next task based on priority and dependencies
-- **Active Task Tracking**: Automatically pick and track the task you're working on
-- **Context Loading**: Automatic task details when you mention identifiers
-- **Workflow Management**: Automatic completion detection and next-task suggestions
-- **Seamless Workflow**: All actions happen within Claude Code - no context switching
+- **3-Command MVP Workflow**: Simple, powerful workflow with init → create → next
+- **Environment Pre-checks**: Automatic validation of CLI, API key, and configuration
+- **Intelligent Task Creation**: Create single tasks or multi-task epics with dependencies
+- **AI-Powered Suggestions**: Get smart recommendations based on priority and dependencies
+- **Automatic Workflow**: Continue active tasks or auto-pick next suggested task
+- **JSON-First Design**: Reliable CLI parsing with structured JSON responses
+- **Dependency Management**: Proper task dependencies with comma-separated syntax
+- **Context-Aware Skills**: Background assistance that activates based on conversation
+- **Seamless Integration**: All actions happen within Claude Code - no context switching
 
 ## Quick Start
 
@@ -69,30 +70,109 @@ Install the plugin from the Claude Code marketplace:
 
 That's it! The plugin is now ready to use.
 
+## The MVP Workflow
+
+AnyTask Claude Code Plugin follows a simple, powerful 3-command workflow:
+
+1. **`/anytask:init`** - Connect your repository to AnyTask (one-time setup)
+2. **`/anytask:create`** - Create tasks when you identify work to be done
+3. **`/anytask:next`** - Let Claude intelligently pick and implement the next task
+
+This workflow is designed to minimize friction and maximize productivity. Each command uses JSON mode for reliable parsing and includes comprehensive pre-checks to ensure your environment is ready.
+
+### Key Design Principles
+
+- **Environment Validation**: All commands check for `anyt` CLI, `ANYT_API_KEY`, and configuration
+- **JSON-First**: Reliable CLI parsing with structured responses
+- **Intelligent Defaults**: Auto-pick first suggested task, structured descriptions
+- **Dependency Management**: Proper task sequencing with comma-separated syntax
+- **Clear Guidance**: Error messages provide actionable steps for resolution
+
 ## Usage
 
-### Slash Commands
+The plugin provides a simple 3-command workflow for task management:
 
-#### `/anytask:create` - Create New Task
+### Core Workflow Commands
 
-Create a new task in AnyTask with full control over all task properties.
+#### `/anytask:init` - Initialize AnyTask in Repository
+
+Connect the current repository to AnyTask workspace and project.
 
 ```
-User: /anytask:create
-Claude: I'll help you create a new task. What would you like the task title to be?
+User: /anytask:init
+Claude: Checking environment...
+✓ anyt CLI installed
+✓ ANYT_API_KEY set
+
+Running anyt init...
+[Interactive workspace/project selection]
+
+✅ Successfully initialized AnyTask
+Configuration: MY (ID: 123) / Main Project (ID: 5)
+
+Use /anytask:create to create tasks or /anytask:next to start working.
 ```
 
-#### `/anytask:next` - Get Next Task Recommendation
+#### `/anytask:create` - Create Single Task
 
-Get intelligent AI-powered suggestions for your next task and start working on it.
+Create a well-structured task suitable for one pull request (4-8 hours of work).
+
+```
+User: /anytask:create "Add API endpoint for task comments"
+Claude: ✅ Created task DEV-42: Add API endpoint for task comments
+
+Status: backlog
+Estimated: 4 hours
+
+Key objectives:
+  • POST /api/tasks/{id}/comments endpoint
+  • Database persistence with timestamps
+  • Tests and error handling
+
+Would you like to start working on this task now?
+```
+
+#### `/anytask:next` - Continue or Pick Next Task
+
+Intelligent workflow that continues active tasks or auto-picks the next recommended task.
 
 ```
 User: /anytask:next
-Claude: Let me get task suggestions for you...
+Claude: Checking for active task...
+No active task found.
 
-Top Task Recommendations:
-1. DEV-42: Implement OAuth callback
-   Priority: 2 (Urgent) | Status: todo
+I found 3 recommended tasks. Starting with the highest priority:
+
+DEV-42: Add API endpoint for task comments
+  Priority: 1 (High)
+  Status: todo
+  Estimate: 4 hours
+
+Picking this task and starting implementation...
+[Claude explores codebase, implements features, writes tests]
+```
+
+### Advanced Command
+
+#### `/anytask:create-epic` - Break Down Large Features
+
+Break down a large feature into multiple tasks with proper dependencies.
+
+```
+User: /anytask:create-epic "Build user authentication with OAuth and JWT"
+Claude: Analyzing codebase and breaking down the epic...
+
+✅ Epic created successfully!
+
+Created 7 tasks with total estimated effort: 32 hours
+
+Task breakdown (in dependency order):
+1. DEV-42: Create user and session database schema (4h) - No dependencies
+2. DEV-43: Implement JWT token service (6h) - Depends on: DEV-42
+3. DEV-44: Integrate Google OAuth provider (5h) - Depends on: DEV-42, DEV-43
+...
+
+Use /anytask:next to start working on the first available task.
 ```
 
 ### Skills (Automatic Assistance)
@@ -112,9 +192,12 @@ Skills work in the background and activate automatically when relevant:
 ├── plugin.json              # Plugin manifest
 ├── marketplace.json         # Marketplace configuration
 ├── commands/                # Slash commands (user-invoked)
-│   ├── create.md           # Create task command
-│   └── next.md             # Next task command
-├── skills/                  # Skills (model-invoked)
+│   ├── init.md             # Initialize repository command
+│   ├── create.md           # Create single task command
+│   ├── next.md             # Continue/pick next task command
+│   └── create-epic.md      # Create multi-task epic command
+├── skills/                  # Skills (model-invoked & internal)
+│   ├── ensure-ready.md     # Pre-check skill (internal)
 │   ├── task-creator.md     # Automatic task creation
 │   ├── task-workflow.md    # Workflow management
 │   └── task-context.md     # Context loading
@@ -138,8 +221,10 @@ For development and testing:
 
 3. Test the commands:
    ```
+   /anytask:init
    /anytask:create
    /anytask:next
+   /anytask:create-epic
    ```
 
 4. After making changes, reinstall:
