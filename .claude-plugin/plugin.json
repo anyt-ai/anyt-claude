@@ -11,6 +11,7 @@
   "license": "MIT",
   "keywords": ["task-management", "anytask", "productivity", "ai"],
   "commands": [
+    "./.claude-plugin/commands/init.md",
     "./.claude-plugin/commands/create.md",
     "./.claude-plugin/commands/next.md"
   ]

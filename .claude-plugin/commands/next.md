@@ -1,128 +1,440 @@
-# Get Next Task and Work On It
+# Continue or Pick Next Task
 
-You are helping the user automatically get the next suggested task and start working on it.
+Continue working on the active task, or automatically pick and start on the next recommended task.
+
+**User intent:** "What's next?" or "Continue my work" or "/next"
+
+## Before You Start
+
+**IMPORTANT:** Before executing ANY AnyTask operations, use the `_ensure_ready` skill to verify:
+1. `anyt` CLI is installed
+2. `ANYT_API_KEY` environment variable is set
+3. `.anyt/anyt.json` configuration file exists
+
+If pre-checks fail, stop and show the error message. If not initialized, guide user to run `/anytask:init` first.
 
 ## Your Process
 
-1. **Get the Next Task**
-   Use the Bash tool to get the top recommended task:
-   ```bash
-   anyt task suggest --limit 1
-   ```
+### Step 1: Check for Active Task
 
-   This command returns the highest-priority task that:
-   - Is ready to work on (all dependencies met)
-   - Is unassigned (by default)
-   - Has no blockers
+First, check if there's already an active task:
 
-2. **Handle No Tasks Available**
-   If no task is suggested:
-   - Reply to the user: "No tasks available to work on right now. All tasks may be blocked, completed, or assigned."
-   - Suggest: "Would you like to create a new task? Use the `/create` command."
-   - STOP here - do not proceed further
+```bash
+anyt active --json
+```
 
-3. **Start Working on the Task**
-   If a task is found, automatically start it:
+**Parse the JSON response:**
+- If `success == true` and `data != null`: There IS an active task
+- If `success == true` and `data == null`: There is NO active task
 
-   a. **Pick the task:**
-   ```bash
-   anyt task pick <task-identifier>
-   ```
+#### If Active Task EXISTS:
 
-   b. **Add starting comment:**
-   ```bash
-   anyt comment add <task-identifier> -m "Starting work on this task"
-   ```
+Display to user:
 
-   c. **Change status to inprogress:**
-   ```bash
-   anyt task edit <task-identifier> --status inprogress
-   ```
+```
+📍 You have an active task: <identifier> - <title>
 
-4. **Display Task Details**
-   Show the user:
-   - Task identifier and title
-   - Full description with all sections
-   - Acceptance criteria checklist
-   - Dependencies (if any)
-   - Estimated effort
+<Show task details: description, acceptance criteria, etc.>
 
-5. **Track Progress Through Acceptance Criteria**
-   As you work on the task, for EACH completed acceptance criterion:
+I'll continue working on this task.
+```
 
-   a. **Update the task description** to check off the completed item:
-   - Read the current description with `anyt task show <task-identifier>`
-   - Update the description, changing `- [ ]` to `- [x]` for the completed item
-   - Use the edit command with HEREDOC format:
-   ```bash
-   anyt task edit <task-identifier> --description "$(cat <<'EOF'
-   [Updated description with checked item]
-   EOF
-   )"
-   ```
+Proceed directly to **Step 3: Start Implementation**.
 
-   b. **Add a comment** about what was completed:
-   ```bash
-   anyt comment add <task-identifier> -m "Completed: [criterion description]"
-   ```
+#### If NO Active Task:
 
-6. **Mark Task as Done**
-   When ALL acceptance criteria are checked:
+Proceed to **Step 2: Suggest Tasks**.
 
-   a. **Add final comment:**
-   ```bash
-   anyt comment add <task-identifier> -m "All acceptance criteria completed"
-   ```
+### Step 2: Suggest Tasks (No Active Task)
 
-   b. **Mark task as done:**
-   ```bash
-   anyt task done <task-identifier>
-   ```
+Get recommended tasks:
 
-7. **Commit Changes**
-   After marking the task as done, commit all changes with a descriptive message:
+```bash
+anyt task suggest --limit 3 --status todo,backlog --json
+```
 
-   a. **Review changes:**
-   ```bash
-   git status
-   git diff
-   ```
+**Parse the JSON response:**
+- If `items` is empty or count is 0: No tasks available
+- If `items` has tasks: Show suggestions
 
-   b. **Stage and commit changes:**
-   ```bash
-   git add .
-   git commit -m "$(cat <<'EOF'
-   <task-identifier>: <task-title>
+#### If NO tasks available:
 
-   <Detailed description of what was implemented>
+Display to user:
 
-   - <Key change 1>
-   - <Key change 2>
-   - <Key change 3>
+```
+No tasks available to work on right now.
 
-   Resolves <task-identifier>
-   EOF
-   )"
-   ```
+All tasks may be blocked, completed, or assigned to others.
 
-   The commit message should:
-   - Start with task identifier (e.g., "DEV-42: Implement Redis caching")
-   - Include a blank line after the title
-   - Provide detailed description of implementation
-   - List key changes as bullet points
-   - End with "Resolves <task-identifier>"
+Would you like to create a new task? Use /anytask:create
+```
 
-## Important Notes
+**STOP here** - do not proceed further.
 
-- Always use the Bash tool to run `anyt` commands
-- Status values are: backlog, todo, inprogress, blocked, canceled, done, archived
-- The status is "inprogress" (NOT "in_progress")
-- Update acceptance criteria as you complete each one - don't wait until the end
-- Add comments throughout the implementation to document progress
-- Use HEREDOC format when updating descriptions to preserve formatting
-- Always read the current task description before updating it
-- Commit messages must start with the task identifier (e.g., "DEV-42: Title")
-- Write clear, descriptive commit messages that explain what was implemented
+#### If tasks ARE available:
+
+**For MVP: Automatically select the first recommended task**
+
+Display:
+
+```
+I found <count> recommended tasks. Starting with the highest priority:
+
+<identifier>: <title>
+  Priority: <priority>
+  Status: <status>
+  Estimate: <estimate> hours
+
+<Brief description>
+```
+
+Extract the first task's identifier and proceed to pick it.
+
+**Alternative (user choice mode - not MVP):**
+
+```
+I recommend these tasks:
+
+1. <identifier>: <title> (Priority: <priority>)
+2. <identifier>: <title> (Priority: <priority>)
+3. <identifier>: <title> (Priority: <priority>)
+
+I'll start with #1 unless you prefer another.
+```
+
+### Step 2b: Pick the Selected Task
+
+Pick the task to make it active:
+
+```bash
+anyt task pick <identifier> --json
+```
+
+Verify success from JSON response.
+
+### Step 3: Start Implementation
+
+Now you have an active task (either from Step 1 or Step 2b).
+
+#### 3a. Show Full Task Context
+
+Fetch and display complete task details:
+
+```bash
+anyt task show <identifier> --json
+```
+
+Display to user:
+
+```
+Task: <identifier> - <title>
+
+## Description
+<description>
+
+## Objectives
+<list objectives>
+
+## Acceptance Criteria
+<list all criteria with checkboxes>
+
+## Dependencies
+<list any dependencies>
+
+## Estimated Effort
+<hours>
+
+## Technical Notes
+<notes>
+
+---
+Starting implementation now...
+```
+
+#### 3b. Implement the Task
+
+**This is the core work phase:**
+
+1. **Understand the task**: Read description, objectives, acceptance criteria
+2. **Find relevant files**: Use Glob, Grep, Read tools to explore codebase
+3. **Implement changes**: Use Edit/Write tools to make code changes
+4. **Write tests**: Follow acceptance criteria - tests must be written
+5. **Run tests**: Use Bash to run test suite and verify
+6. **Track progress**: Update acceptance criteria as you complete items
+
+**For EACH completed acceptance criterion:**
+
+a. Add a comment:
+```bash
+anyt comment add <identifier> -m "Completed: <criterion description>" --json
+```
+
+b. (Optional) Update description to check off item:
+```bash
+# First, get current description
+anyt task show <identifier> --json
+
+# Then update with checked item
+anyt task edit <identifier> --description "$(cat <<'EOF'
+<updated description with - [x] for completed items>
+EOF
+)" --json
+```
+
+### Step 4: Mark Task as Done
+
+When ALL acceptance criteria are satisfied:
+
+```bash
+anyt task done <identifier> --note "All acceptance criteria met, tests passing" --json
+```
+
+Display to user:
+
+```
+✅ Task <identifier> completed successfully!
+
+All acceptance criteria met:
+  ✓ <criterion 1>
+  ✓ <criterion 2>
+  ✓ <criterion 3>
+  ✓ Tests written and passing
+```
+
+### Step 5: Commit Changes (Optional based on workflow)
+
+If there are uncommitted changes, offer to commit:
+
+```bash
+# Check git status
+git status
+
+# If changes exist, show them
+git diff
+
+# Ask user if they want to commit
+```
+
+If yes, create a commit:
+
+```bash
+git add .
+git commit -m "$(cat <<'EOF'
+<identifier>: <title>
+
+<Brief description of what was implemented>
+
+- <Key change 1>
+- <Key change 2>
+- <Key change 3>
+
+Resolves <identifier>
+EOF
+)"
+```
+
+### Step 6: Suggest Next Task
+
+After completing a task, automatically suggest what's next:
+
+```
+Great work! Would you like to continue with another task?
+
+I can suggest the next one if you run /anytask:next again.
+```
+
+## Important Guidelines
+
+- **Auto-pick in MVP**: For MVP, automatically select the first suggested task
+- **Focus on implementation**: The main value is in actually implementing the code
+- **Track progress**: Add comments as you complete acceptance criteria
+- **Run tests**: Always verify tests pass before marking done
+- **Use JSON mode**: Parse JSON responses reliably
+- **Clear communication**: Keep user informed of progress
+- **Handle errors**: Check JSON `success` field and handle failures gracefully
+
+## Example Workflow
+
+**User:** `/anytask:next`
+
+**Step 1: Check active**
+```bash
+anyt active --json
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": null
+}
+```
+
+No active task → proceed to suggest.
+
+**Step 2: Suggest**
+```bash
+anyt task suggest --limit 3 --status todo,backlog --json
+```
+
+Response:
+```json
+{
+  "success": true,
+  "items": [
+    {
+      "identifier": "DEV-42",
+      "title": "Add task comments API",
+      "priority": 1,
+      "status": "todo"
+    },
+    {
+      "identifier": "DEV-43",
+      "title": "Implement caching",
+      "priority": 0,
+      "status": "backlog"
+    }
+  ],
+  "count": 2
+}
+```
+
+Display:
+```
+I found 2 recommended tasks. Starting with the highest priority:
+
+DEV-42: Add task comments API
+  Priority: 1 (High)
+  Status: todo
+
+Let me pick this task and get started...
+```
+
+**Step 2b: Pick**
+```bash
+anyt task pick DEV-42 --json
+```
+
+**Step 3: Show task and implement**
+```bash
+anyt task show DEV-42 --json
+```
+
+Display task details, then:
+
+```
+Starting implementation now...
+
+[Claude explores codebase, implements features, writes tests]
+
+[As each criterion is completed:]
+```
+
+```bash
+anyt comment add DEV-42 -m "Completed: POST endpoint implementation" --json
+anyt comment add DEV-42 -m "Completed: Database persistence" --json
+anyt comment add DEV-42 -m "Completed: Tests and error handling" --json
+```
+
+**Step 4: Mark done**
+```bash
+anyt task done DEV-42 --note "All acceptance criteria met, tests passing" --json
+```
+
+Display:
+```
+✅ Task DEV-42 completed successfully!
+
+All acceptance criteria met:
+  ✓ POST endpoint implemented
+  ✓ Database persistence working
+  ✓ Error handling added
+  ✓ Tests written and passing
+
+Would you like to continue with another task?
+```
+
+## Advanced Options
+
+### Include assigned tasks in suggestions
+```bash
+anyt task suggest --limit 5 --include-assigned --json
+```
+
+### Filter by specific status
+```bash
+anyt task suggest --status todo --limit 5 --json
+```
+
+### Show more suggestions
+```bash
+anyt task suggest --limit 10 --json
+```
+
+## Error Handling
+
+### No active task and no suggestions
+```
+No tasks available to work on right now.
+
+Would you like to create a new task? Use /anytask:create
+```
+
+### Task pick failed
+```
+❌ Failed to pick task <identifier>
+
+Error: <error message>
+
+The task may already be assigned or blocked.
+Try: anyt task show <identifier>
+```
+
+### Task completion failed
+```
+❌ Failed to mark task as done
+
+Error: <error message>
+
+Possible reasons:
+  • Task has incomplete dependencies
+  • Task is blocked
+  • Permission issue
+```
+
+## CLI Command Reference
+
+Check active task:
+```bash
+anyt active --json
+```
+
+Get suggestions:
+```bash
+anyt task suggest --limit 3 --status todo,backlog --json
+anyt task suggest --limit 5 --include-assigned --json
+```
+
+Pick a task:
+```bash
+anyt task pick <identifier> --json
+```
+
+Show task details:
+```bash
+anyt task show <identifier> --json
+```
+
+Add comment:
+```bash
+anyt comment add <identifier> -m "Comment text" --json
+```
+
+Mark task as done:
+```bash
+anyt task done <identifier> --json
+anyt task done <identifier> --note "Completion note" --json
+```
 
 ## Example Workflow
 

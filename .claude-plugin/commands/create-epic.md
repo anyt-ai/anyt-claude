@@ -1,136 +1,358 @@
 # Create Epic - Break Down Large Features into Tasks
 
-You are helping the user create an epic (a large feature or initiative) by breaking it down into multiple smaller tasks that can each fit in a single pull request.
+Break down a large feature or initiative into multiple smaller, focused tasks with proper dependencies.
 
-**Expected input:** A high-level feature description or epic requirement (e.g., "Build user authentication system with OAuth and JWT")
+**User intent:** "Create an epic for..." or "Break down this feature..."
+
+**Expected input:** A high-level feature description (e.g., "Build user authentication system with OAuth and JWT")
+
+## Before You Start
+
+**IMPORTANT:** Before executing ANY AnyTask operations, use the `_ensure_ready` skill to verify:
+1. `anyt` CLI is installed
+2. `ANYT_API_KEY` environment variable is set
+3. `.anyt/anyt.json` configuration file exists
+
+If pre-checks fail, stop and show the error message. If not initialized, guide user to run `/anytask:init` first.
 
 ## Your Process
 
-1. **Investigate and Analyze the Requirement**
-   - Read the user's request carefully
-   - Search the codebase to understand existing architecture, patterns, and dependencies
-   - Identify the key components and workflows needed
-   - Research any relevant technologies or APIs required
-   - Consider edge cases and non-functional requirements
-   - Think about the logical order of implementation
+### Step 1: Investigate and Analyze the Requirement
 
-2. **Break Down into Tasks**
-   Decompose the epic into smaller, focused tasks that each:
-   - Can be completed in a single pull request (4-8 hours of work)
-   - Have a clear, specific objective
-   - Build logically on previous tasks
-   - Are testable independently
-   - Follow the existing codebase patterns
+Before creating any tasks, understand the full scope:
 
-   Typical task categories to consider:
-   - Database/schema changes
-   - Backend API endpoints
+1. **Read the user's request carefully**
+   - What is the high-level goal?
+   - What are the key features/capabilities needed?
+   - Are there any constraints or requirements?
+
+2. **Search the codebase** to understand context:
+   - Existing architecture and patterns
+   - Similar features already implemented
+   - Technology stack and frameworks
+   - Testing patterns
+   - Database schema
+
+3. **Identify key components and workflows**:
+   - Database/schema changes needed
+   - Backend services or APIs
    - Frontend components
-   - Integration/middleware
-   - Testing infrastructure
-   - Documentation
+   - Integration points
+   - Testing requirements
+   - Documentation needs
 
-3. **Create Each Task with Dependencies**
-   For each task in the breakdown:
+4. **Consider implementation order**:
+   - What needs to be built first (foundation)?
+   - What depends on what?
+   - What can be done in parallel?
+   - What's the critical path?
 
-   a. **Create the task with title:**
-   ```bash
-   anyt task add "<clear, specific title>"
-   ```
+### Step 2: Break Down into Tasks
 
-   b. **Parse the task identifier** (e.g., DEV-42) from the output
+Decompose the epic into smaller, focused tasks that each:
+- Can be completed in a single pull request (4-8 hours of work)
+- Have a clear, specific objective
+- Build logically on previous tasks (express via dependencies)
+- Are testable independently
+- Follow the existing codebase patterns
 
-   c. **Update with structured description:**
-   ```bash
-   anyt task edit <task-id> --description "$(cat <<'EOF'
-   ## Description
-   [What needs to be built]
+**Typical task breakdown pattern:**
+1. Database/schema changes (foundation)
+2. Core services/business logic
+3. API endpoints
+4. Frontend components
+5. Integration/middleware
+6. Testing and documentation
 
-   ## Objectives
-   - [Specific goal 1]
-   - [Specific goal 2]
+**Each task should have:**
+- Clear, specific title
+- Structured description (Description, Objectives, Acceptance Criteria, etc.)
+- Realistic time estimate (3-8 hours)
+- Dependencies on other tasks (if any)
 
-   ## Acceptance Criteria
-   - [ ] [Criterion 1]
-   - [ ] [Criterion 2]
-   - [ ] Tests written and passing
-   - [ ] Code reviewed and merged
+### Step 3: Create Each Task with Dependencies
 
-   ## Dependencies
-   [Task identifier]: [Task name]
-   (Or "None" if no dependencies)
+For each task in the breakdown, follow this process:
 
-   ## Estimated Effort
-   [X hours estimate]
+#### 3a. Create Task with JSON Output
 
-   ## Technical Notes
-   [Implementation guidance, architectural decisions, gotchas]
-   EOF
-   )"
-   ```
+Use JSON mode to reliably capture the task identifier:
 
-   d. **Set priority if needed:**
-   ```bash
-   anyt task edit <task-id> --priority <-2 to 2>
-   ```
+```bash
+anyt task add "<clear, specific title>" --json
+```
 
-   e. **Add dependencies for sequencing:**
-   If this task depends on other tasks, use:
-   ```bash
-   anyt task dep add <task-id> --on <dependency-task-id-1>,<dependency-task-id-2>
-   ```
+**Parse the JSON response:**
+```json
+{
+  "success": true,
+  "data": {
+    "identifier": "DEV-42",
+    "id": "...",
+    "title": "...",
+    ...
+  }
+}
+```
 
-   Example:
-   ```bash
-   # Task DEV-44 depends on DEV-42 and DEV-43 being completed first
-   anyt task dep add DEV-44 --on DEV-42,DEV-43
-   ```
+Extract and store the `identifier` (e.g., DEV-42) - you'll need it for dependencies.
 
-4. **Create a Summary**
-   After creating all tasks, display:
-   - Total number of tasks created
-   - Task identifiers and titles in dependency order
-   - A dependency graph (use `anyt graph` if available)
-   - Suggested next steps for the user
+#### 3b. Update with Structured Description
 
-5. **Ask User**
-   - "Would you like to start working on the first task now?"
-   - "Or would you like to review the task breakdown first?"
+Add the structured description using HEREDOC format:
 
-## Important Notes
+```bash
+anyt task edit DEV-42 --description "$(cat <<'EOF'
+## Description
+[What needs to be built - 1-2 sentences]
 
-- **Investigation is critical** - Take time to understand the codebase before creating tasks
-- Each task should be **independently testable and deployable**
-- Tasks should be **logically ordered** - use dependencies to enforce sequence
-- Keep tasks **small enough** for a single PR (4-8 hours max)
-- Be **specific in titles** - avoid vague terms like "Setup" or "Implement feature"
-- Include **technical context** in notes - help future implementers
-- Use **consistent naming** across related tasks
-- Set **realistic estimates** based on complexity
-- Always use **HEREDOC format** for multi-line descriptions
-- Dependencies use **comma-separated** task identifiers: `--on DEV-1,DEV-2,DEV-3`
+## Objectives
+- [Specific goal 1]
+- [Specific goal 2]
+- [Specific goal 3]
+
+## Acceptance Criteria
+- [ ] [Criterion 1]
+- [ ] [Criterion 2]
+- [ ] [Criterion 3]
+- [ ] Tests written and passing
+- [ ] Code reviewed and merged
+
+## Dependencies
+[List task identifiers this depends on]
+(Or "None" if no dependencies)
+
+## Estimated Effort
+[X] hours
+
+## Technical Notes
+[Implementation guidance, architectural decisions, gotchas]
+EOF
+)" --json
+```
+
+#### 3c. Set Priority (Optional)
+
+If this task is particularly urgent or low priority:
+
+```bash
+anyt task edit DEV-42 --priority 1 --json
+```
+
+Priority levels:
+- `-2`: Lowest
+- `-1`: Low
+- `0`: Normal (default)
+- `1`: High
+- `2`: Highest/Urgent
+
+#### 3d. Add Task Dependencies
+
+**IMPORTANT:** If this task depends on other tasks, add dependencies using:
+
+```bash
+anyt task dep add DEV-44 --on DEV-42,DEV-43 --json
+```
+
+This means: "Task DEV-44 depends on DEV-42 AND DEV-43 being completed first"
+
+**Dependency Rules:**
+- Use comma-separated list for multiple dependencies
+- Don't create circular dependencies (A depends on B, B depends on A)
+- Foundation tasks (database, core services) typically have no dependencies
+- UI/integration tasks typically depend on API/service tasks
+- Use `anyt task dep list <identifier> --json` to verify dependencies
+
+**Example dependency flow:**
+```bash
+# 1. Create foundation task (no dependencies)
+anyt task add "Create user schema" --json
+# → DEV-42 (no dependencies)
+
+# 2. Create service task (depends on schema)
+anyt task add "Implement user service" --json
+# → DEV-43
+anyt task dep add DEV-43 --on DEV-42 --json
+
+# 3. Create API task (depends on service)
+anyt task add "Add user API endpoints" --json
+# → DEV-44
+anyt task dep add DEV-44 --on DEV-43 --json
+
+# 4. Create UI task (depends on API)
+anyt task add "Build user profile UI" --json
+# → DEV-45
+anyt task dep add DEV-45 --on DEV-44 --json
+```
+
+#### 3e. Track Task Identifiers
+
+Keep a list of created task identifiers for the summary. Example:
+
+```
+Created tasks:
+- DEV-42: Create user schema (4h) [No dependencies]
+- DEV-43: Implement user service (5h) [Depends on: DEV-42]
+- DEV-44: Add user API endpoints (4h) [Depends on: DEV-43]
+- DEV-45: Build user profile UI (6h) [Depends on: DEV-44]
+```
+
+### Step 4: Create Epic Summary
+
+After creating all tasks, display a comprehensive summary:
+
+```
+✅ Epic created successfully!
+
+Created 7 tasks with total estimated effort: 32 hours
+
+Task breakdown (in dependency order):
+
+1. DEV-42: Create user and session database schema (4h)
+   Dependencies: None
+
+2. DEV-43: Implement JWT token service (6h)
+   Dependencies: DEV-42
+
+3. DEV-44: Integrate Google OAuth provider (5h)
+   Dependencies: DEV-42, DEV-43
+
+4. DEV-45: Create login and logout API endpoints (4h)
+   Dependencies: DEV-43
+
+5. DEV-46: Build React login component (6h)
+   Dependencies: DEV-44, DEV-45
+
+6. DEV-47: Add authentication middleware (4h)
+   Dependencies: DEV-43, DEV-45
+
+7. DEV-48: Create example protected routes (3h)
+   Dependencies: DEV-47
+```
+
+### Step 5: Show Dependency Graph (Optional)
+
+If helpful, visualize the dependency graph:
+
+```bash
+anyt graph --json
+```
+
+Or show ASCII graph:
+
+```bash
+anyt graph
+```
+
+### Step 6: Offer Next Actions
+
+Ask the user:
+
+```
+The epic has been broken down into <N> tasks with proper dependencies.
+
+Would you like to:
+  1. Start working on the first task (DEV-42)?
+  2. Review the task board to see the full breakdown?
+  3. Adjust priorities or dependencies?
+
+Use /anytask:next to start working on the first available task.
+```
+
+## Important Guidelines
+
+- **Use _ensure_ready first**: Always verify environment before starting
+- **Investigation is critical**: Take time to understand the codebase before creating tasks
+- **Use JSON mode**: All CLI commands should use `--json` for reliable parsing
+- **Parse and store identifiers**: You need task identifiers for dependency creation
+- **Create dependencies correctly**: Use `anyt task dep add DEV-X --on DEV-Y,DEV-Z --json`
+- **Each task independently testable**: Should be deployable on its own
+- **Logical ordering**: Use dependencies to enforce sequence, not just descriptions
+- **Small tasks**: 4-8 hours max for a single PR
+- **Specific titles**: Avoid vague terms like "Setup" or "Implement feature"
+- **Technical context**: Include implementation guidance in notes
+- **Consistent naming**: Use clear patterns across related tasks
+- **Realistic estimates**: Base on complexity and codebase familiarity
+- **HEREDOC format**: Use for all multi-line descriptions
+- **No circular deps**: Ensure task graph is acyclic (A→B→C, not A→B→A)
 
 ## Dependency Guidelines
 
-- **Sequential dependencies**: When Task B requires Task A to be complete, add dependency:
-  ```bash
-  anyt task dep add DEV-B --on DEV-A
-  ```
+### Sequential Dependencies
+When Task B requires Task A to be complete:
 
-- **Multiple dependencies**: When Task C requires both A and B:
-  ```bash
-  anyt task dep add DEV-C --on DEV-A,DEV-B
-  ```
+```bash
+anyt task dep add DEV-B --on DEV-A --json
+```
 
-- **No circular dependencies**: Ensure tasks don't depend on each other in a loop
+Response:
+```json
+{
+  "success": true,
+  "message": "Dependency added successfully"
+}
+```
 
-- **Foundation first**: Database/schema tasks typically come first, then API, then UI
+### Multiple Dependencies
+When Task C requires both A and B to be complete:
+
+```bash
+anyt task dep add DEV-C --on DEV-A,DEV-B --json
+```
+
+This creates an AND relationship: C can only start when BOTH A AND B are done.
+
+### Verify Dependencies
+Check dependencies were created correctly:
+
+```bash
+anyt task dep list DEV-C --json
+```
+
+Response shows both dependencies and what tasks are blocked by this one.
+
+### Common Patterns
+
+**Foundation → Services → API → UI:**
+```bash
+# Foundation (no deps)
+anyt task add "Create database schema" --json → DEV-42
+
+# Service layer (depends on schema)
+anyt task add "Implement business logic" --json → DEV-43
+anyt task dep add DEV-43 --on DEV-42 --json
+
+# API layer (depends on services)
+anyt task add "Create REST endpoints" --json → DEV-44
+anyt task dep add DEV-44 --on DEV-43 --json
+
+# UI layer (depends on API)
+anyt task add "Build frontend components" --json → DEV-45
+anyt task dep add DEV-45 --on DEV-44 --json
+```
+
+### Rules
+
+- **No circular dependencies**: A → B → C is OK, but A → B → A is NOT
+- **Foundation first**: Database/schema → Services → API → UI
+- **Parallel tasks OK**: If tasks don't depend on each other, don't add dependencies
+- **Test dependencies**: Testing tasks can depend on the feature they test
 
 ## Example Workflow
 
-**User request:** "Build user authentication system with OAuth and JWT"
+**User:** `/anytask:create-epic "Build user authentication system with OAuth and JWT"`
 
-**Step 1: Investigate**
+### Step 1: Pre-check Environment
+
+```
+[Uses _ensure_ready skill]
+✓ anyt CLI installed
+✓ ANYT_API_KEY set
+✓ .anyt/anyt.json exists
+```
+
+### Step 2: Investigate Codebase
+
 ```
 Analyzing codebase...
 - Current auth: None detected
@@ -138,11 +360,9 @@ Analyzing codebase...
 - API Framework: FastAPI
 - Frontend: React
 - No existing OAuth providers configured
-```
 
-**Step 2: Break down into tasks**
-```
-1. Database schema for users and sessions
+Identified 7 tasks needed:
+1. Database schema for users and sessions (foundation)
 2. JWT token generation and validation service
 3. OAuth provider integration (Google)
 4. Login/logout API endpoints
@@ -151,13 +371,30 @@ Analyzing codebase...
 7. Protected route examples
 ```
 
-**Step 3: Create tasks with dependencies**
+### Step 3: Create Tasks with Dependencies
+
+#### Task 1: Foundation (no dependencies)
 
 ```bash
-# Task 1: Foundation - no dependencies
-anyt task add "Create user and session database schema"
-# Output: Created task DEV-42
+anyt task add "Create user and session database schema" --json
+```
 
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "identifier": "DEV-42",
+    "title": "Create user and session database schema",
+    "status": "backlog"
+  }
+}
+```
+
+Store identifier: `DEV-42`
+
+Update description:
+```bash
 anyt task edit DEV-42 --description "$(cat <<'EOF'
 ## Description
 Create database tables for users, sessions, and OAuth providers
@@ -187,12 +424,30 @@ None
 - Ensure email is unique and indexed
 - Session tokens should be hashed
 EOF
-)"
+)" --json
+```
 
-# Task 2: Depends on Task 1
-anyt task add "Implement JWT token service"
-# Output: Created task DEV-43
+#### Task 2: JWT Service (depends on Task 1)
 
+```bash
+anyt task add "Implement JWT token service" --json
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "identifier": "DEV-43",
+    ...
+  }
+}
+```
+
+Store identifier: `DEV-43`
+
+Update description:
+```bash
 anyt task edit DEV-43 --description "$(cat <<'EOF'
 ## Description
 Create service for generating and validating JWT tokens
@@ -222,15 +477,43 @@ DEV-42: Create user and session database schema
 - Set token expiry to 1 hour, refresh to 7 days
 - Include user_id and role in claims
 EOF
-)"
+)" --json
+```
 
-# Add dependency
-anyt task dep add DEV-43 --on DEV-42
+Add dependency on DEV-42:
+```bash
+anyt task dep add DEV-43 --on DEV-42 --json
+```
 
-# Task 3: Depends on Tasks 1 and 2
-anyt task add "Integrate Google OAuth provider"
-# Output: Created task DEV-44
+Response:
+```json
+{
+  "success": true,
+  "message": "Dependency added successfully"
+}
+```
 
+#### Task 3: OAuth Integration (depends on Tasks 1 and 2)
+
+```bash
+anyt task add "Integrate Google OAuth provider" --json
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "identifier": "DEV-44",
+    ...
+  }
+}
+```
+
+Store identifier: `DEV-44`
+
+Update description:
+```bash
 anyt task edit DEV-44 --description "$(cat <<'EOF'
 ## Description
 Add Google OAuth authentication flow
@@ -261,15 +544,43 @@ DEV-43: Implement JWT token service
 - Handle existing user matching by email
 - Map OAuth profile to user table fields
 EOF
-)"
+)" --json
+```
 
-# Add dependencies
-anyt task dep add DEV-44 --on DEV-42,DEV-43
+Add dependencies on DEV-42 AND DEV-43:
+```bash
+anyt task dep add DEV-44 --on DEV-42,DEV-43 --json
+```
 
-# Task 4: Login/logout endpoints
-anyt task add "Create login and logout API endpoints"
-# Output: Created task DEV-45
+Response:
+```json
+{
+  "success": true,
+  "message": "Dependencies added successfully"
+}
+```
 
+#### Task 4: Login/Logout Endpoints (depends on Task 2)
+
+```bash
+anyt task add "Create login and logout API endpoints" --json
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "identifier": "DEV-45",
+    ...
+  }
+}
+```
+
+Store identifier: `DEV-45`
+
+Update description:
+```bash
 anyt task edit DEV-45 --description "$(cat <<'EOF'
 ## Description
 Implement REST API endpoints for login and logout
@@ -299,14 +610,35 @@ DEV-43: Implement JWT token service
 - Rate limit login attempts
 - Clear session from database on logout
 EOF
-)"
+)" --json
+```
 
-anyt task dep add DEV-45 --on DEV-43
+Add dependency on DEV-43:
+```bash
+anyt task dep add DEV-45 --on DEV-43 --json
+```
 
-# Task 5: Frontend component
-anyt task add "Build React login component"
-# Output: Created task DEV-46
+#### Task 5: Frontend Login Component (depends on Tasks 3 and 4)
 
+```bash
+anyt task add "Build React login component" --json
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "identifier": "DEV-46",
+    ...
+  }
+}
+```
+
+Store identifier: `DEV-46`
+
+Update description:
+```bash
 anyt task edit DEV-46 --description "$(cat <<'EOF'
 ## Description
 Create React component for user login form
@@ -338,14 +670,35 @@ DEV-45: Create login and logout API endpoints
 - Use React Context for auth state
 - Follow existing component patterns
 EOF
-)"
+)" --json
+```
 
-anyt task dep add DEV-46 --on DEV-44,DEV-45
+Add dependencies on DEV-44 AND DEV-45:
+```bash
+anyt task dep add DEV-46 --on DEV-44,DEV-45 --json
+```
 
-# Task 6: Middleware
-anyt task add "Add authentication middleware"
-# Output: Created task DEV-47
+#### Task 6: Authentication Middleware (depends on Tasks 2 and 4)
 
+```bash
+anyt task add "Add authentication middleware" --json
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "identifier": "DEV-47",
+    ...
+  }
+}
+```
+
+Store identifier: `DEV-47`
+
+Update description:
+```bash
 anyt task edit DEV-47 --description "$(cat <<'EOF'
 ## Description
 Create middleware to protect authenticated routes
@@ -376,14 +729,35 @@ DEV-45: Create login and logout API endpoints
 - Support optional auth for public routes
 - Log authentication failures
 EOF
-)"
+)" --json
+```
 
-anyt task dep add DEV-47 --on DEV-43,DEV-45
+Add dependencies on DEV-43 AND DEV-45:
+```bash
+anyt task dep add DEV-47 --on DEV-43,DEV-45 --json
+```
 
-# Task 7: Example protected routes
-anyt task add "Create example protected routes"
-# Output: Created task DEV-48
+#### Task 7: Example Protected Routes (depends on Task 6)
 
+```bash
+anyt task add "Create example protected routes" --json
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "identifier": "DEV-48",
+    ...
+  }
+}
+```
+
+Store identifier: `DEV-48`
+
+Update description:
+```bash
 anyt task edit DEV-48 --description "$(cat <<'EOF'
 ## Description
 Add example endpoints demonstrating protected routes
@@ -413,40 +787,78 @@ DEV-47: Add authentication middleware
 - Add OpenAPI/Swagger docs
 - Show both required and optional auth patterns
 EOF
-)"
-
-anyt task dep add DEV-48 --on DEV-47
+)" --json
 ```
 
-**Step 4: Summary**
-```
-Epic created successfully! 7 tasks created:
-
-DEV-42: Create user and session database schema (4h) [No dependencies]
-DEV-43: Implement JWT token service (6h) [Depends on: DEV-42]
-DEV-44: Integrate Google OAuth provider (5h) [Depends on: DEV-42, DEV-43]
-DEV-45: Create login and logout API endpoints (4h) [Depends on: DEV-43]
-DEV-46: Build React login component (6h) [Depends on: DEV-44, DEV-45]
-DEV-47: Add authentication middleware (4h) [Depends on: DEV-43, DEV-45]
-DEV-48: Create example protected routes (3h) [Depends on: DEV-47]
-
-Total estimated effort: 32 hours
-
-Dependency graph:
+Add dependency on DEV-47:
+```bash
+anyt task dep add DEV-48 --on DEV-47 --json
 ```
 
+### Step 4: Display Epic Summary
+
+```
+✅ Epic created successfully!
+
+Created 7 tasks with total estimated effort: 32 hours
+
+Task breakdown (in dependency order):
+
+1. DEV-42: Create user and session database schema (4h)
+   Status: backlog
+   Dependencies: None
+   ↓
+
+2. DEV-43: Implement JWT token service (6h)
+   Status: backlog
+   Dependencies: DEV-42
+   ↓
+
+3. DEV-44: Integrate Google OAuth provider (5h)
+   Status: backlog
+   Dependencies: DEV-42, DEV-43
+
+4. DEV-45: Create login and logout API endpoints (4h)
+   Status: backlog
+   Dependencies: DEV-43
+   ↓
+
+5. DEV-46: Build React login component (6h)
+   Status: backlog
+   Dependencies: DEV-44, DEV-45
+
+6. DEV-47: Add authentication middleware (4h)
+   Status: backlog
+   Dependencies: DEV-43, DEV-45
+   ↓
+
+7. DEV-48: Create example protected routes (3h)
+   Status: backlog
+   Dependencies: DEV-47
+```
+
+### Step 5: Show Dependency Graph (Optional)
+
+```bash
+anyt graph --json
+```
+
+Or ASCII visualization:
 ```bash
 anyt graph
 ```
 
-**Step 5: Ask user**
+### Step 6: Offer Next Actions
+
 ```
 The epic has been broken down into 7 tasks with proper dependencies.
 
 Would you like to:
-1. Start working on the first task (DEV-42)?
-2. Review the task breakdown first?
-3. Adjust priorities or dependencies?
+  1. Start working on the first task (DEV-42)?
+  2. Review the task board?
+  3. Adjust priorities or dependencies?
+
+Use /anytask:next to start working on the first available task.
 ```
 
 ## Task Size Guidelines
@@ -468,5 +880,80 @@ Would you like to:
 
 4. **Bug Fix (Complex)**:
    - Investigation → Root cause fix → Add tests → Related fixes → Verification
+
+## CLI Command Reference
+
+### Task Creation
+
+Create task with JSON:
+```bash
+anyt task add "Task title" --json
+anyt task add "Task title" --priority 1 --json
+anyt task add "Task title" --labels "feature,urgent" --json
+```
+
+### Task Editing
+
+Update task description:
+```bash
+anyt task edit DEV-42 --description "$(cat <<'EOF'
+Multi-line description
+EOF
+)" --json
+```
+
+Update task priority:
+```bash
+anyt task edit DEV-42 --priority 1 --json
+```
+
+### Dependency Management
+
+Add single dependency:
+```bash
+anyt task dep add DEV-43 --on DEV-42 --json
+```
+
+Add multiple dependencies:
+```bash
+anyt task dep add DEV-45 --on DEV-42,DEV-43,DEV-44 --json
+```
+
+List dependencies:
+```bash
+anyt task dep list DEV-45 --json
+```
+
+Remove dependencies:
+```bash
+anyt task dep rm DEV-45 --on DEV-42 --json
+```
+
+### Visualization
+
+View dependency graph:
+```bash
+anyt graph --json
+anyt graph --format ascii
+anyt graph --format dot
+```
+
+View specific task graph:
+```bash
+anyt graph DEV-42 --json
+```
+
+### Task Information
+
+Show task details:
+```bash
+anyt task show DEV-42 --json
+```
+
+List all tasks:
+```bash
+anyt task list --json
+anyt task list --status backlog,todo --json
+```
 
 Start creating the epic now based on the user's request.
