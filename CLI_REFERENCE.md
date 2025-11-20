@@ -5,6 +5,61 @@ Auto-generated from Typer app introspection.
 ================================================================================
 
 
+## JSON Output Schema
+
+Many commands support the `--json` flag for machine-readable output.
+
+All JSON responses follow a consistent schema:
+
+
+**Success Response (Single Item):**
+
+```json
+
+{
+  "success": true,
+  "data": { ... }
+}
+
+```
+
+
+**Success Response (List):**
+
+```json
+
+{
+  "success": true,
+  "items": [...],
+  "count": 10,
+  "total": 100,  // optional
+  "page": 1      // optional
+}
+
+```
+
+
+**Error Response:**
+
+```json
+
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Error message"
+  }
+}
+
+```
+
+
+See individual command documentation below for specific JSON examples.
+
+
+================================================================================
+
+
 ## anyt
 
 --------------------------------------------------------------------------------
@@ -33,8 +88,8 @@ Usage:  [OPTIONS] COMMAND [ARGS]...
 - `health`
 - `init`
 - `summary`
+- `system-worker`
 - `task`
-- `timeline`
 - `worker`
 
 
@@ -48,6 +103,11 @@ Show the currently active task.
 ```
 Usage:  [OPTIONS]
 ```
+
+**Parameters:**
+
+  **--json** [Option]
+    Output in JSON format
 
 
 ================================================================================
@@ -236,10 +296,10 @@ Usage:  [OPTIONS] [IDENTIFIER]
 
 **Parameters:**
 
-  **identifier** [Argument]
-    Task identifier (e.g., DEV-42). Uses active task if not provided.
   **--message / -m** [Option]
     Comment content
+  **identifier** [Argument]
+    Task identifier (e.g., DEV-42). Uses active task if not provided.
   **--json** [Option]
     Output as JSON
 
@@ -372,10 +432,25 @@ Requires ANYT_API_KEY environment variable to be set.
 Creates .anyt/ directory structure and anyt.json configuration.
 
 Examples:
+    # Interactive mode (default)
+    anyt init
+
+    # Non-interactive with auto-selection
+    anyt init --non-interactive
+    anyt init -y
+
+    # Specify workspace and project explicitly
+    anyt init --workspace-id 101 --project-id 5
+
+    # Non-interactive with explicit workspace
+    anyt init -y --workspace-id 101
+
+    # CI/CD usage
     export ANYT_API_KEY=anyt_agent_...
-    anyt init                                    # Production API (https://api.anyt.dev)
-    anyt init --dev                              # Development API (http://localhost:8000)
-    anyt init --workspace-id 123 --identifier DEV  # Link to specific workspace
+    anyt init --non-interactive --workspace-id 101 --project-id 5
+
+    # Development API
+    anyt init --dev
 
 **Usage:**
 ```
@@ -390,10 +465,14 @@ Usage:  [OPTIONS]
     Workspace name (optional)
   **--identifier / -i** [Option]
     Workspace identifier (e.g., DEV, PROJ)
+  **--project-id / -p** [Option]
+    Project ID to use
   **--dir / -d** [Option]
     Directory to initialize (default: current)
   **--dev** [Option]
     Use development API (http://localhost:8000)
+  **--non-interactive / -y** [Option]
+    Non-interactive mode: auto-select first workspace/project
 
 
 ================================================================================
@@ -425,6 +504,71 @@ Usage:  [OPTIONS]
 ================================================================================
 
 
+### anyt system-worker
+
+--------------------------------------------------------------------------------
+
+System worker for demo projects
+
+**Usage:**
+```
+Usage:  [OPTIONS] COMMAND [ARGS]...
+```
+
+
+**Subcommands:**
+
+- `start`
+
+
+#### anyt system-worker start
+
+--------------------------------------------------------------------------------
+
+Start the system worker for demo projects.
+
+This worker is operated by AnyTask company to automatically
+execute tasks in users' demo projects using a built-in workflow.
+
+The built-in demo_project.yaml workflow handles everything:
+- Clones demo repository
+- Executes task with Claude Code
+- Commits and pushes changes
+- Updates task status
+
+The workflow is bundled with the CLI and requires no setup.
+It can be overridden by placing a custom demo_project.yaml
+in the workspace's .anyt/workflows/ directory.
+
+Requirements:
+    - WORKER_API_TOKEN environment variable must be set
+
+Example:
+    export WORKER_API_TOKEN=secret-worker-token
+    anyt system-worker start
+    anyt system-worker start --workspace /tmp/worker --poll-interval 5
+
+**Usage:**
+```
+Usage:  [OPTIONS]
+```
+
+**Parameters:**
+
+  **--workspace / -w** [Option]
+    Workspace directory (default: /tmp/anyt-system-worker)
+  **--poll-interval / -i** [Option]
+    Polling interval in seconds
+  **--max-backoff** [Option]
+    Maximum backoff interval in seconds
+
+
+================================================================================
+
+
+================================================================================
+
+
 ### anyt task
 
 --------------------------------------------------------------------------------
@@ -441,7 +585,6 @@ Usage:  [OPTIONS] COMMAND [ARGS]...
 
 - `add`
 - `bulk-update`
-- `create`
 - `dep`
 - `done`
 - `edit`
@@ -474,11 +617,11 @@ Usage:  [OPTIONS] TITLE
   **--phase** [Option]
     Phase/milestone identifier (e.g., T3, Phase 1)
   **-p / --priority** [Option]
-    Priority (-2 to 2, default: 0)
+    Priority level: -2 (lowest), -1 (low), 0 (normal), 1 (high), 2 (highest). Default: 0
   **--labels** [Option]
     Comma-separated labels
   **--status** [Option]
-    Task status (default: backlog)
+    Task status (backlog, todo, active, blocked, done, canceled, archived). Default: backlog
   **--owner** [Option]
     Assign to user or agent ID
   **--estimate** [Option]
@@ -487,6 +630,57 @@ Usage:  [OPTIONS] TITLE
     Project ID (uses current/default project if not specified)
   **--json** [Option]
     Output in JSON format
+
+
+**JSON Output:**
+
+*Success Response:*
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "uid": "t_abc123",
+    "identifier": "DEV-42",
+    "title": "Implement authentication endpoint",
+    "description": "Add JWT-based authentication to the API",
+    "status": "active",
+    "priority": 1,
+    "labels": [
+      "epic:auth",
+      "backend"
+    ],
+    "owner_id": "user_xyz",
+    "owner_type": "user",
+    "project_id": 123,
+    "workspace_id": 456,
+    "phase": "T3",
+    "estimate": 3.5,
+    "created_at": "2025-01-15T10:30:00Z",
+    "updated_at": "2025-01-16T14:20:00Z",
+    "completed_at": null,
+    "dependencies": [
+      "DEV-40"
+    ],
+    "blocking": [
+      "DEV-43"
+    ]
+  }
+}
+```
+
+*Error Responses:*
+Example 1:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid priority value",
+    "details": "Priority must be between -2 and 2"
+  }
+}
+```
 
 
 ================================================================================
@@ -499,7 +693,7 @@ Usage:  [OPTIONS] TITLE
 Update multiple tasks at once.
 
 Examples:
-    anyt task bulk-update DEV-1,DEV-2,DEV-3 --status in_progress
+    anyt task bulk-update DEV-1,DEV-2,DEV-3 --status active
     anyt task bulk-update DEV-4,DEV-5 --priority 2
     anyt task bulk-update DEV-6,DEV-7,DEV-8 --assignee john --yes
     anyt task bulk-update DEV-9,DEV-10 --status todo --priority 1
@@ -514,9 +708,9 @@ Usage:  [OPTIONS] TASK_IDS
   **task_ids** [Argument]
     Comma-separated task identifiers (e.g., 'DEV-1,DEV-2,DEV-3')
   **--status / -s** [Option]
-    New status for all tasks
+    New status for all tasks (backlog, todo, active, blocked, done, canceled, archived)
   **--priority / -p** [Option]
-    New priority for all tasks (-2 to 2)
+    New priority for all tasks: -2 (lowest), -1 (low), 0 (normal), 1 (high), 2 (highest)
   **--assignee / -a** [Option]
     Assignee username or ID
   **--project** [Option]
@@ -525,41 +719,6 @@ Usage:  [OPTIONS] TASK_IDS
     Skip confirmation prompt
   **--json** [Option]
     Output as JSON
-
-
-================================================================================
-
-
-#### anyt task create
-
---------------------------------------------------------------------------------
-
-Create a new task from a template.
-
-Opens the template in your editor ($EDITOR) for customization before creating the task.
-The template content will be stored in the task's description field.
-
-**Usage:**
-```
-Usage:  [OPTIONS] TITLE
-```
-
-**Parameters:**
-
-  **title** [Argument]
-    Task title
-  **--template / -t** [Option]
-    Template name to use (default: default)
-  **--phase** [Option]
-    Phase/milestone identifier (e.g., T3, Phase 1)
-  **-p / --priority** [Option]
-    Priority (-2 to 2, default: 0)
-  **--project** [Option]
-    Project ID (uses current/default project if not specified)
-  **--no-edit** [Option]
-    Skip opening editor, use template as-is
-  **--json** [Option]
-    Output in JSON format
 
 
 ================================================================================
@@ -697,15 +856,15 @@ Usage:  [OPTIONS] [IDENTIFIER]
 **Parameters:**
 
   **identifier** [Argument]
-    Task identifier (e.g., DEV-42) or ID. Uses active task if not specified.
+    Task identifier (e.g., DEV-42, t_1Z for UID) or ID. Uses active task if not specified.
   **--title** [Option]
     New title
   **-d / --description** [Option]
     New description
   **--status** [Option]
-    New status
+    New status (backlog, todo, active, blocked, done, canceled, archived)
   **-p / --priority** [Option]
-    New priority (-2 to 2)
+    New priority: -2 (lowest), -1 (low), 0 (normal), 1 (high), 2 (highest)
   **--labels** [Option]
     Comma-separated labels (replaces all labels)
   **--owner** [Option]
@@ -720,6 +879,60 @@ Usage:  [OPTIONS] [IDENTIFIER]
     Preview changes without applying
   **--json** [Option]
     Output in JSON format
+
+
+**JSON Output:**
+
+*Success Response:*
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "uid": "t_abc123",
+    "identifier": "DEV-42",
+    "title": "Implement authentication endpoint",
+    "description": "Add JWT-based authentication to the API",
+    "status": "done",
+    "priority": 1,
+    "labels": [
+      "epic:auth",
+      "backend"
+    ],
+    "owner_id": "user_xyz",
+    "owner_type": "user",
+    "project_id": 123,
+    "workspace_id": 456,
+    "phase": "T3",
+    "estimate": 3.5,
+    "created_at": "2025-01-15T10:30:00Z",
+    "updated_at": "2025-01-16T14:20:00Z",
+    "completed_at": "2025-01-16T16:45:00Z",
+    "dependencies": [
+      "DEV-40"
+    ],
+    "blocking": [
+      "DEV-43"
+    ]
+  }
+}
+```
+
+*Error Responses:*
+Example 1:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "DEPENDENCY_ERROR",
+    "message": "Cannot complete task DEV-42: incomplete dependencies",
+    "incomplete_dependencies": [
+      "DEV-40",
+      "DEV-41"
+    ]
+  }
+}
+```
 
 
 ================================================================================
@@ -739,7 +952,7 @@ Usage:  [OPTIONS]
 **Parameters:**
 
   **--status** [Option]
-    Filter by status (comma-separated)
+    Filter by status (backlog, todo, active, blocked, done, canceled, archived). Comma-separated.
   **--phase** [Option]
     Filter by phase/milestone
   **--mine** [Option]
@@ -760,6 +973,50 @@ Usage:  [OPTIONS]
     Pagination offset
   **--json** [Option]
     Output in JSON format
+
+
+**JSON Output:**
+
+*Success Response:*
+```json
+{
+  "success": true,
+  "items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "uid": "t_abc123",
+      "identifier": "DEV-42",
+      "title": "Implement authentication endpoint",
+      "description": "Add JWT-based authentication to the API",
+      "status": "active",
+      "priority": 1,
+      "labels": [
+        "epic:auth",
+        "backend"
+      ],
+      "owner_id": "user_xyz",
+      "owner_type": "user",
+      "project_id": 123,
+      "workspace_id": 456,
+      "phase": "T3",
+      "estimate": 3.5,
+      "created_at": "2025-01-15T10:30:00Z",
+      "updated_at": "2025-01-16T14:20:00Z",
+      "completed_at": null,
+      "dependencies": [
+        "DEV-40"
+      ],
+      "blocking": [
+        "DEV-43"
+      ]
+    }
+  ],
+  "count": 1,
+  "total": 100,
+  "page": 1,
+  "page_size": 20
+}
+```
 
 
 ================================================================================
@@ -811,15 +1068,53 @@ Usage:  [OPTIONS] [IDENTIFIER]
 **Parameters:**
 
   **identifier** [Argument]
-    Task identifier (e.g., DEV-42) or ID. Leave empty for interactive picker.
+    Task identifier (e.g., DEV-42, t_1Z for UID) or ID. Leave empty for interactive picker.
   **--status** [Option]
-    Filter by status (comma-separated)
+    Filter by status (backlog, todo, active, blocked, done, canceled, archived). Comma-separated.
   **--project** [Option]
     Filter by project ID
   **--mine** [Option]
     Show only tasks assigned to you
   **--json** [Option]
     Output in JSON format
+
+
+**JSON Output:**
+
+*Success Response:*
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "uid": "t_abc123",
+    "identifier": "DEV-42",
+    "title": "Implement authentication endpoint",
+    "description": "Add JWT-based authentication to the API",
+    "status": "active",
+    "priority": 1,
+    "labels": [
+      "epic:auth",
+      "backend"
+    ],
+    "owner_id": "user_xyz",
+    "owner_type": "user",
+    "project_id": 123,
+    "workspace_id": 456,
+    "phase": "T3",
+    "estimate": 3.5,
+    "created_at": "2025-01-15T10:30:00Z",
+    "updated_at": "2025-01-16T14:20:00Z",
+    "completed_at": null,
+    "dependencies": [
+      "DEV-40"
+    ],
+    "blocking": [
+      "DEV-43"
+    ]
+  }
+}
+```
 
 
 ================================================================================
@@ -839,11 +1134,34 @@ Usage:  [OPTIONS] [IDENTIFIERS]...
 **Parameters:**
 
   **identifiers** [Argument]
-    Task identifier(s) (e.g., DEV-42 DEV-43). Uses active task if not specified.
+    Task identifier(s) (e.g., DEV-42, t_1Z for UID). Uses active task if not specified.
   **--force / -f** [Option]
     Skip confirmation prompt
   **--json** [Option]
     Output in JSON format
+
+
+**JSON Output:**
+
+*Success Response:*
+```json
+{
+  "success": true,
+  "message": "Task DEV-42 deleted successfully"
+}
+```
+
+*Error Responses:*
+Example 1:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Task DEV-42 not found"
+  }
+}
+```
 
 
 ================================================================================
@@ -901,6 +1219,60 @@ Usage:  [OPTIONS] [IDENTIFIER]
     Output in JSON format
 
 
+**JSON Output:**
+
+*Success Response:*
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "uid": "t_abc123",
+    "identifier": "DEV-42",
+    "title": "Implement authentication endpoint",
+    "description": "Add JWT-based authentication to the API",
+    "status": "active",
+    "priority": 1,
+    "labels": [
+      "epic:auth",
+      "backend"
+    ],
+    "owner_id": "user_xyz",
+    "owner_type": "user",
+    "project_id": 123,
+    "workspace_id": 456,
+    "phase": "T3",
+    "estimate": 3.5,
+    "created_at": "2025-01-15T10:30:00Z",
+    "updated_at": "2025-01-16T14:20:00Z",
+    "completed_at": null,
+    "dependencies": [
+      "DEV-40"
+    ],
+    "blocking": [
+      "DEV-43"
+    ]
+  }
+}
+```
+
+*Error Responses:*
+Example 1:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Task DEV-42 not found",
+    "suggestions": [
+      "Check the task identifier",
+      "Run: anyt task list"
+    ]
+  }
+}
+```
+
+
 ================================================================================
 
 
@@ -926,42 +1298,58 @@ Usage:  [OPTIONS]
   **--limit** [Option]
     Number of suggestions to return
   **--status** [Option]
-    Filter by status (comma-separated)
+    Filter by status (backlog, todo, active, blocked, done, canceled, archived). Comma-separated.
   **--include-assigned** [Option]
     Include already-assigned tasks
   **--json** [Option]
     Output in JSON format
 
 
-================================================================================
+**JSON Output:**
 
-
-================================================================================
-
-
-### anyt timeline
-
---------------------------------------------------------------------------------
-
-Show chronological timeline of task events, attempts, and artifacts.
-
-**Usage:**
+*Success Response:*
+```json
+{
+  "success": true,
+  "items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "uid": "t_abc123",
+      "identifier": "DEV-42",
+      "title": "Implement authentication endpoint",
+      "description": "Add JWT-based authentication to the API",
+      "status": "active",
+      "priority": 1,
+      "labels": [
+        "epic:auth",
+        "backend"
+      ],
+      "owner_id": "user_xyz",
+      "owner_type": "user",
+      "project_id": 123,
+      "workspace_id": 456,
+      "phase": "T3",
+      "estimate": 3.5,
+      "created_at": "2025-01-15T10:30:00Z",
+      "updated_at": "2025-01-16T14:20:00Z",
+      "completed_at": null,
+      "dependencies": [
+        "DEV-40"
+      ],
+      "blocking": [
+        "DEV-43"
+      ]
+    }
+  ],
+  "count": 1,
+  "total": 5,
+  "page": 1,
+  "page_size": 20
+}
 ```
-Usage:  [OPTIONS] IDENTIFIER
-```
 
-**Parameters:**
 
-  **identifier** [Argument]
-    Task identifier (e.g., DEV-42)
-  **--since** [Option]
-    Show events since date (YYYY-MM-DD)
-  **--last** [Option]
-    Show events from last N hours/days (e.g., 24h, 7d)
-  **--compact** [Option]
-    Compact format
-  **--json** [Option]
-    Output in JSON format
+================================================================================
 
 
 ================================================================================
@@ -1147,8 +1535,13 @@ The worker continuously polls for tasks and executes workflows automatically.
 
 Setup:
 1. Set ANYT_API_KEY environment variable for API authentication
-2. Get your agent identifier from https://anyt.dev/home/agents
-3. Pass agent identifier via --agent-id flag
+2. Create an agent at https://anyt.dev/home/agents
+3. Run 'anyt worker start' and select from available agents
+
+Agent Selection:
+- If --agent-id is provided: Uses that agent directly
+- If --agent-id is NOT provided: Shows interactive list of available agents
+- If no agents exist: Shows error with instructions to create one
 
 Note: ANYT_API_KEY (API key) and agent-id (agent identifier) are different:
 - ANYT_API_KEY: API key for authentication (e.g., anyt_agent_...)
@@ -1167,10 +1560,11 @@ Built-in workflows (bundled with CLI, no setup required):
 
 Example:
     export ANYT_API_KEY=anyt_agent_...  # API key for authentication
-    anyt worker start --agent-id agent-xxx  # Agent identifier from https://anyt.dev/home/agents
-    anyt worker start --workflow local_dev --agent-id agent-xxx
-    anyt worker start --agent-id agent-xxx --project-id 123
-    anyt worker start --poll-interval 10 --workspace /path/to/project --agent-id agent-xxx
+    anyt worker start  # Interactive agent selection
+    anyt worker start --agent-id agent-xxx  # Direct agent selection
+    anyt worker start --workflow local_dev
+    anyt worker start --project-id 123
+    anyt worker start --poll-interval 10 --workspace /path/to/project
 
 **Usage:**
 ```
@@ -1190,7 +1584,7 @@ Usage:  [OPTIONS]
   **--max-backoff** [Option]
     Maximum backoff interval in seconds
   **--agent-id / -a** [Option]
-    Agent identifier to filter tasks (e.g., agent-xxx). Get from https://anyt.dev/home/agents.
+    Agent identifier to filter tasks (e.g., agent-xxx). If not provided, will prompt to select from available agents.
   **--project-id / -p** [Option]
     Project ID to scope task suggestions. If not provided, loads from .anyt/anyt.json (current_project_id field).
 
